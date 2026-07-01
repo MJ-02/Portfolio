@@ -108,31 +108,16 @@
   -webkit-user-select: none;
 }
 
-/* Bliss Wallpaper - CSS recreation */
+/* Bliss Wallpaper */
 .xp-wallpaper {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    180deg,
-    #3A6EA5 0%,
-    #4A8EC9 8%,
-    #5DADE2 15%,
-    #7BC8F6 22%,
-    #87CEEB 28%,
-    #6BBF59 32%,
-    #5DAF4A 38%,
-    #4E9F3B 45%,
-    #3D8F2E 52%,
-    #2D8020 58%,
-    #237018 65%,
-    #1B6010 75%,
-    #145008 85%,
-    #0D4005 95%,
-    #083003 100%
-  );
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   z-index: 0;
 }
 
@@ -141,10 +126,51 @@
   position: absolute;
   top: 12px;
   left: 12px;
+  bottom: 50px;
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
   gap: 8px;
   z-index: 1;
+}
+
+.xp-desktop-icons-refresh {
+  animation: xpDesktopRefresh 0.35s ease-out;
+}
+
+@keyframes xpDesktopRefresh {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+
+.xp-desktop-icons-classic .xp-desktop-icon {
+  width: 60px;
+  height: 60px;
+}
+
+.xp-desktop-icons-classic .xp-desktop-icon-image {
+  width: 28px;
+  height: 28px;
+}
+
+.xp-desktop-icons-classic .xp-desktop-icon-label {
+  font-size: 10px;
+  max-width: 56px;
+}
+
+.xp-desktop-icon-cut {
+  opacity: 0.45;
+}
+
+.xp-desktop-icon-rename-input {
+  width: 68px;
+  font-size: 11px;
+  text-align: center;
+  border: 1px solid #0054E3;
+  outline: none;
+  padding: 1px 2px;
+  background: white;
 }
 
 /* Individual Desktop Icon */
@@ -511,7 +537,6 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.5px;
   box-shadow: 1px 0 2px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
 }
 
 .xp-start-btn:hover {
@@ -819,6 +844,102 @@
 }
 
 /* ========================================
+   RIGHT-CLICK CONTEXT MENU
+   ======================================== */
+.xp-context-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+}
+
+.xp-context-menu {
+  min-width: 190px;
+  background: #ECE9D8;
+  border: 1px solid #716F64;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+  padding: 3px;
+  font-family: 'Tahoma', 'Segoe UI', sans-serif;
+  font-size: 11px;
+  animation: xpContextMenuOpen 0.08s ease-out;
+}
+
+@keyframes xpContextMenuOpen {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.xp-context-menu-item-wrapper {
+  position: relative;
+}
+
+.xp-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px 4px 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: #000;
+}
+
+.xp-context-menu-item:hover:not(.xp-context-menu-item-disabled) {
+  background: #316AC5;
+  color: white;
+  border-radius: 2px;
+}
+
+.xp-context-menu-item-disabled {
+  color: #A0A0A0;
+  cursor: default;
+}
+
+.xp-context-menu-item-bold .xp-context-menu-item-label {
+  font-weight: bold;
+}
+
+.xp-context-menu-item-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.xp-context-menu-item-icon svg,
+.xp-context-menu-item-icon img {
+  width: 16px;
+  height: 16px;
+}
+
+.xp-context-menu-item-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.xp-context-menu-item-arrow {
+  font-size: 8px;
+  color: #333;
+  margin-left: 6px;
+}
+
+.xp-context-menu-item:hover .xp-context-menu-item-arrow {
+  color: white;
+}
+
+.xp-context-menu-separator {
+  height: 1px;
+  background: #ACA899;
+  margin: 3px 2px;
+}
+
+/* ========================================
    WINDOW CONTENT STYLES
    ======================================== */
 
@@ -1052,6 +1173,22 @@
   align-items: baseline;
 }
 
+.xp-link {
+  font-size: 11px;
+  color: #0054E3;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.xp-link:hover {
+  text-decoration: underline;
+  color: #003399;
+}
+
+.xp-link:visited {
+  color: #0054E3;
+}
+
 .xp-contact-form-area {
   flex: 1;
   padding: 16px 20px;
@@ -1141,6 +1278,180 @@
   height: 100%;
   color: #999;
   font-size: 14px;
+}
+
+/* ========================================
+   NOTEPAD TEXT FILE
+   ======================================== */
+.xp-notepad-textarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #000;
+  background: white;
+}
+
+/* ========================================
+   ICON PROPERTIES
+   ======================================== */
+.xp-properties-content {
+  padding: 16px;
+}
+
+.xp-properties-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ACA899;
+}
+
+.xp-properties-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 11px;
+  color: #333;
+  border-bottom: 1px dotted #D4D0C8;
+}
+
+.xp-properties-row span:first-child {
+  font-weight: bold;
+  color: #003399;
+}
+
+/* ========================================
+   SHORTCUT ERROR DIALOG
+   ======================================== */
+.xp-shortcut-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+}
+
+.xp-shortcut-error-icon {
+  flex-shrink: 0;
+}
+
+.xp-shortcut-error p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* ========================================
+   DISPLAY PROPERTIES
+   ======================================== */
+.xp-display-props {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ECE9D8;
+}
+
+.xp-display-props-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 8px 0;
+  border-bottom: 1px solid #ACA899;
+}
+
+.xp-display-props-tab {
+  padding: 5px 12px;
+  background: #D4D0C8;
+  border: 1px solid #ACA899;
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  font-size: 11px;
+  color: #333;
+  cursor: pointer;
+}
+
+.xp-display-props-tab-active {
+  background: #ECE9D8;
+  font-weight: bold;
+  position: relative;
+  top: 1px;
+}
+
+.xp-display-props-body {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.xp-display-props-preview {
+  flex-shrink: 0;
+}
+
+.xp-display-props-monitor {
+  width: 160px;
+  height: 130px;
+  background: #333;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: inset 0 0 0 2px #666;
+}
+
+.xp-display-props-screen {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid #000;
+}
+
+.xp-display-props-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-display-props-listbox {
+  margin-top: 6px;
+  background: white;
+  border: 1px solid #7F9DB9;
+  height: 110px;
+  overflow-y: auto;
+}
+
+.xp-display-props-list-item {
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #333;
+}
+
+.xp-display-props-list-item-selected {
+  background: #316AC5;
+  color: white;
+}
+
+.xp-display-props-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid #ACA899;
+}
+
+.xp-btn-ok {
+  padding: 4px 16px;
+  font-size: 11px;
+  background: linear-gradient(180deg, #FDFDFD 0%, #ECE9D8 100%);
+  border: 1px solid #ACA899;
+  border-radius: 3px;
+  cursor: not-allowed;
+  color: #666;
 }
 
 /* ========================================

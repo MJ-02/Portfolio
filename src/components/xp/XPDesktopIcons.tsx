@@ -1,33 +1,24 @@
 'use client'
 
-import React from 'react'
-import { useXPStore } from '@/store/xp-store'
+import React, { useEffect, useRef, useState } from 'react'
+import { useXPStore, DesktopIconItem, defaultDesktopIcons } from '@/store/xp-store'
 import { XPAppIcon } from './XPWindow'
 
-interface DesktopIcon {
-  id: string
-  label: string
-  icon: string
-  content: string
-  windowTitle: string
-  windowWidth?: number
-  windowHeight?: number
-}
-
-const desktopIcons: DesktopIcon[] = [
-  { id: 'about', label: 'My Computer', icon: 'computer', content: 'about', windowTitle: 'My Computer - About Me' },
-  { id: 'experience', label: 'Internet Explorer', icon: 'ie', content: 'experience', windowTitle: 'Work Experience - Internet Explorer', windowWidth: 650, windowHeight: 480 },
-  { id: 'education', label: 'My Pictures', icon: 'photos', content: 'education', windowTitle: 'Education - My Pictures', windowWidth: 580, windowHeight: 480 },
-  { id: 'projects', label: 'My Documents', icon: 'folder', content: 'projects', windowTitle: 'Projects - My Documents', windowWidth: 600, windowHeight: 500 },
-  { id: 'skills', label: 'Notepad', icon: 'notepad', content: 'skills', windowTitle: 'Skills - Notepad', windowWidth: 550, windowHeight: 480 },
-  { id: 'contact', label: 'Outlook Express', icon: 'outlook', content: 'contact', windowTitle: 'Contact - Outlook Express', windowWidth: 560, windowHeight: 440 },
-  { id: 'snake', label: 'Snake.exe', icon: 'snake', content: 'game', windowTitle: 'Snake', windowWidth: 520, windowHeight: 460 },
-]
-
 export default function XPDesktopIcons() {
-  const { openWindow, closeStartMenu } = useXPStore()
+  const {
+    desktopIcons,
+    openWindow,
+    closeStartMenu,
+    openContextMenu,
+    iconSize,
+    renamingIconId,
+    renameDesktopIcon,
+    stopRenaming,
+    clipboard,
+    desktopRefreshKey,
+  } = useXPStore()
 
-  const handleDoubleClick = (icon: DesktopIcon) => {
+  const handleDoubleClick = (icon: DesktopIconItem) => {
     openWindow(
       icon.id,
       icon.windowTitle,
@@ -39,22 +30,66 @@ export default function XPDesktopIcons() {
     closeStartMenu()
   }
 
+  const handleContextMenu = (e: React.MouseEvent, icon: DesktopIconItem) => {
+    e.preventDefault()
+    e.stopPropagation()
+    openContextMenu({ x: e.clientX, y: e.clientY, type: 'icon', iconId: icon.id })
+  }
+
   return (
-    <div className="xp-desktop-icons">
+    <div
+      key={desktopRefreshKey}
+      className={`xp-desktop-icons xp-desktop-icons-refresh ${iconSize === 'classic' ? 'xp-desktop-icons-classic' : ''}`}
+    >
       {desktopIcons.map(icon => (
         <button
           key={icon.id}
-          className="xp-desktop-icon"
+          className={`xp-desktop-icon ${clipboard?.id === icon.id && clipboard.mode === 'cut' ? 'xp-desktop-icon-cut' : ''}`}
           onDoubleClick={() => handleDoubleClick(icon)}
+          onContextMenu={(e) => handleContextMenu(e, icon)}
         >
           <div className="xp-desktop-icon-image">
-            <XPAppIcon icon={icon.icon} size={40} />
+            <XPAppIcon icon={icon.icon} size={iconSize === 'classic' ? 28 : 40} />
           </div>
-          <span className="xp-desktop-icon-label">{icon.label}</span>
+          {renamingIconId === icon.id ? (
+            <RenameInput
+              initial={icon.label}
+              onSubmit={(label) => renameDesktopIcon(icon.id, label)}
+              onCancel={stopRenaming}
+            />
+          ) : (
+            <span className="xp-desktop-icon-label">{icon.label}</span>
+          )}
         </button>
       ))}
     </div>
   )
 }
 
-export { desktopIcons }
+function RenameInput({ initial, onSubmit, onCancel }: { initial: string; onSubmit: (label: string) => void; onCancel: () => void }) {
+  const [value, setValue] = useState(initial)
+  const ref = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    ref.current?.focus()
+    ref.current?.select()
+  }, [])
+
+  return (
+    <input
+      ref={ref}
+      className="xp-desktop-icon-rename-input"
+      value={value}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={() => onSubmit(value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); onSubmit(value) }
+        if (e.key === 'Escape') { e.preventDefault(); onCancel() }
+      }}
+    />
+  )
+}
+
+export { defaultDesktopIcons as desktopIcons }

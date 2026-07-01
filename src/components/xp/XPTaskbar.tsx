@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useXPStore } from '@/store/xp-store'
 import { XPAppIcon } from './XPWindow'
+import { assetPath } from '@/lib/base-path'
 
 export default function XPTaskbar() {
   const { windows, activeWindowId, toggleStartMenu, startMenuOpen, clock, updateClock, focusWindow, minimizeWindow } = useXPStore()
@@ -24,12 +25,8 @@ export default function XPTaskbar() {
     <div className="xp-taskbar">
       {/* Start Button */}
       <button className="xp-start-btn" onClick={toggleStartMenu}>
-        <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
-          <rect x="1" y="1" width="8" height="8" rx="1" fill="#FF4500"/>
-          <rect x="11" y="1" width="8" height="8" rx="1" fill="#4CAF50"/>
-          <rect x="1" y="11" width="8" height="8" rx="1" fill="#2196F3"/>
-          <rect x="11" y="11" width="8" height="8" rx="1" fill="#FFC107"/>
-        </svg>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={assetPath('/images/icons/windows-logo.webp')} alt="" width={18} height={18} draggable={false} />
         <span className="xp-start-text">start</span>
       </button>
 

@@ -24,7 +24,7 @@ export default function XPStartMenu() {
                 <ellipse cx="24" cy="38" rx="16" ry="12" fill="#6CB4FF"/>
               </svg>
             </div>
-            <span className="xp-start-username">John Doe</span>
+            <span className="xp-start-username">Abdullah Majali</span>
           </div>
           <div className="xp-start-items">
             {desktopIcons.map(icon => (
@@ -46,19 +46,16 @@ export default function XPStartMenu() {
         {/* Right Panel */}
         <div className="xp-start-right">
           <button className="xp-start-right-item">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-              <rect x="3" y="3" width="18" height="14" rx="2" fill="#FFD044" stroke="#C4960C" strokeWidth="1"/>
-              <rect x="3" y="5" width="18" height="12" fill="#FFE680"/>
-            </svg>
+            <XPAppIcon icon="folder" size={20} />
             <span>My Documents</span>
           </button>
           <button className="xp-start-right-item">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-              <rect x="3" y="3" width="18" height="18" rx="2" fill="#E8F0FE" stroke="#5B9BD5" strokeWidth="1"/>
-              <path d="M7 10L11 7L15 10L19 7" stroke="#5B9BD5" strokeWidth="1.5" fill="none"/>
-              <rect x="6" y="13" width="12" height="6" fill="#4DA6FF"/>
-            </svg>
+            <XPAppIcon icon="photos" size={20} />
             <span>My Pictures</span>
+          </button>
+          <button className="xp-start-right-item">
+            <XPAppIcon icon="computer" size={20} />
+            <span>My Computer</span>
           </button>
           <button className="xp-start-right-item">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
