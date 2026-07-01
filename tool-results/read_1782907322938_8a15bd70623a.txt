@@ -1,0 +1,621 @@
+     1→'use client'
+     2→
+     3→import React, { useCallback, useRef, useEffect, useState } from 'react'
+     4→import { useXPStore, WindowState } from '@/store/xp-store'
+     5→
+     6→interface XPWindowProps {
+     7→  window: WindowState
+     8→}
+     9→
+    10→export default function XPWindow({ window: win }: XPWindowProps) {
+    11→  const {
+    12→    closeWindow,
+    13→    minimizeWindow,
+    14→    maximizeWindow,
+    15→    restoreWindow,
+    16→    focusWindow,
+    17→    moveWindow,
+    18→    resizeWindow,
+    19→    activeWindowId,
+    20→  } = useXPStore()
+    21→
+    22→  const isActive = activeWindowId === win.id
+    23→  const dragRef = useRef<{ startX: number; startY: number; winX: number; winY: number } | null>(null)
+    24→  const resizeRef = useRef<{ startX: number; startY: number; winW: number; winH: number } | null>(null)
+    25→  const windowRef = useRef<HTMLDivElement>(null)
+    26→
+    27→  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    28→    if (win.maximized) return
+    29→    e.preventDefault()
+    30→    focusWindow(win.id)
+    31→    dragRef.current = {
+    32→      startX: e.clientX,
+    33→      startY: e.clientY,
+    34→      winX: win.x,
+    35→      winY: win.y,
+    36→    }
+    37→  }, [win.id, win.x, win.y, win.maximized, focusWindow])
+    38→
+    39→  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    40→    if (win.maximized) return
+    41→    e.preventDefault()
+    42→    e.stopPropagation()
+    43→    focusWindow(win.id)
+    44→    resizeRef.current = {
+    45→      startX: e.clientX,
+    46→      startY: e.clientY,
+    47→      winW: win.width,
+    48→      winH: win.height,
+    49→    }
+    50→  }, [win.id, win.width, win.height, win.maximized, focusWindow])
+    51→
+    52→  useEffect(() => {
+    53→    const handleMouseMove = (e: MouseEvent) => {
+    54→      if (dragRef.current) {
+    55→        const dx = e.clientX - dragRef.current.startX
+    56→        const dy = e.clientY - dragRef.current.startY
+    57→        const newX = Math.max(0, dragRef.current.winX + dx)
+    58→        const newY = Math.max(0, dragRef.current.winY + dy)
+    59→        moveWindow(win.id, newX, newY)
+    60→      }
+    61→      if (resizeRef.current) {
+    62→        const dx = e.clientX - resizeRef.current.startX
+    63→        const dy = e.clientY - resizeRef.current.startY
+    64→        const newW = Math.max(win.minWidth, resizeRef.current.winW + dx)
+    65→        const newH = Math.max(win.minHeight, resizeRef.current.winH + dy)
+    66→        resizeWindow(win.id, newW, newH)
+    67→      }
+    68→    }
+    69→
+    70→    const handleMouseUp = () => {
+    71→      dragRef.current = null
+    72→      resizeRef.current = null
+    73→    }
+    74→
+    75→    window.addEventListener('mousemove', handleMouseMove)
+    76→    window.addEventListener('mouseup', handleMouseUp)
+    77→    return () => {
+    78→      window.removeEventListener('mousemove', handleMouseMove)
+    79→      window.removeEventListener('mouseup', handleMouseUp)
+    80→    }
+    81→  }, [win.id, win.minWidth, win.minHeight, moveWindow, resizeWindow])
+    82→
+    83→  if (win.minimized) return null
+    84→
+    85→  const style: React.CSSProperties = win.maximized
+    86→    ? { position: 'absolute', top: 0, left: 0, right: 0, bottom: 40, zIndex: win.zIndex }
+    87→    : { position: 'absolute', top: win.y, left: win.x, width: win.width, height: win.height, zIndex: win.zIndex }
+    88→
+    89→  return (
+    90→    <div
+    91→      ref={windowRef}
+    92→      className={`xp-window ${isActive ? 'xp-window-active' : 'xp-window-inactive'}`}
+    93→      style={style}
+    94→      onMouseDown={() => focusWindow(win.id)}
+    95→    >
+    96→      {/* Title Bar */}
+    97→      <div
+    98→        className={`xp-titlebar ${isActive ? 'xp-titlebar-active' : 'xp-titlebar-inactive'}`}
+    99→        onMouseDown={handleMouseDown}
+   100→        onDoubleClick={() => win.maximized ? restoreWindow(win.id) : maximizeWindow(win.id)}
+   101→      >
+   102→        <div className="xp-titlebar-icon">
+   103→          <XPAppIcon icon={win.icon} size={16} />
+   104→        </div>
+   105→        <div className={`xp-titlebar-text ${isActive ? '' : 'xp-titlebar-text-inactive'}`}>
+   106→          {win.title}
+   107→        </div>
+   108→        <div className="xp-titlebar-buttons">
+   109→          <button
+   110→            className="xp-titlebar-btn xp-btn-minimize"
+   111→            onClick={(e) => { e.stopPropagation(); minimizeWindow(win.id) }}
+   112→            onMouseDown={(e) => e.stopPropagation()}
+   113→          >
+   114→            <MinimizeIcon />
+   115→          </button>
+   116→          <button
+   117→            className="xp-titlebar-btn xp-btn-maximize"
+   118→            onClick={(e) => { e.stopPropagation(); win.maximized ? restoreWindow(win.id) : maximizeWindow(win.id) }}
+   119→            onMouseDown={(e) => e.stopPropagation()}
+   120→          >
+   121→            {win.maximized ? <RestoreDownIcon /> : <MaximizeIcon />}
+   122→          </button>
+   123→          <button
+   124→            className="xp-titlebar-btn xp-btn-close"
+   125→            onClick={(e) => { e.stopPropagation(); closeWindow(win.id) }}
+   126→            onMouseDown={(e) => e.stopPropagation()}
+   127→          >
+   128→            <CloseIcon />
+   129→          </button>
+   130→        </div>
+   131→      </div>
+   132→
+   133→      {/* Menu Bar */}
+   134→      <div className="xp-menubar">
+   135→        <span className="xp-menubar-item">File</span>
+   136→        <span className="xp-menubar-item">Edit</span>
+   137→        <span className="xp-menubar-item">View</span>
+   138→        <span className="xp-menubar-item">Help</span>
+   139→      </div>
+   140→
+   141→      {/* Content Area */}
+   142→      <div className="xp-window-content">
+   143→        <WindowContent content={win.content} />
+   144→      </div>
+   145→
+   146→      {/* Status Bar */}
+   147→      <div className="xp-statusbar">
+   148→        <span className="xp-statusbar-text">Ready</span>
+   149→      </div>
+   150→
+   151→      {/* Resize Handle */}
+   152→      {!win.maximized && (
+   153→        <div
+   154→          className="xp-resize-handle"
+   155→          onMouseDown={handleResizeStart}
+   156→        />
+   157→      )}
+   158→    </div>
+   159→  )
+   160→}
+   161→
+   162→// Reusable app icon component
+   163→export function XPAppIcon({ icon, size = 32 }: { icon: string; size?: number }) {
+   164→  const iconMap: Record<string, JSX.Element> = {
+   165→    computer: (
+   166→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   167→        <rect x="3" y="4" width="26" height="18" rx="2" fill="#E8F0FE" stroke="#5B9BD5" strokeWidth="1.5"/>
+   168→        <rect x="5" y="6" width="22" height="14" rx="1" fill="#0054E3"/>
+   169→        <rect x="6" y="7" width="20" height="10" rx="0.5" fill="#4DA6FF"/>
+   170→        <rect x="12" y="22" width="8" height="2" fill="#7F9DB9"/>
+   171→        <rect x="8" y="24" width="16" height="2" rx="1" fill="#B4C7DC"/>
+   172→      </svg>
+   173→    ),
+   174→    folder: (
+   175→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   176→        <path d="M2 7C2 5.89543 2.89543 5 4 5H12L14 8H28C29.1046 8 30 8.89543 30 10V25C30 26.1046 29.1046 27 28 27H4C2.89543 27 2 26.1046 2 25V7Z" fill="#FFD044" stroke="#C4960C" strokeWidth="0.5"/>
+   177→        <path d="M2 10H30V25C30 26.1046 29.1046 27 28 27H4C2.89543 27 2 26.1046 2 25V10Z" fill="#FFE680" stroke="#C4960C" strokeWidth="0.5"/>
+   178→      </svg>
+   179→    ),
+   180→    ie: (
+   181→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   182→        <circle cx="16" cy="16" r="13" fill="#0078D4"/>
+   183→        <ellipse cx="16" cy="16" rx="6" ry="13" stroke="#FFB900" strokeWidth="1.5" fill="none"/>
+   184→        <path d="M4 16H28" stroke="#FFB900" strokeWidth="1"/>
+   185→        <path d="M6.5 9H25.5" stroke="#FFB900" strokeWidth="0.8"/>
+   186→        <path d="M6.5 23H25.5" stroke="#FFB900" strokeWidth="0.8"/>
+   187→        <text x="16" y="20" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">e</text>
+   188→      </svg>
+   189→    ),
+   190→    notepad: (
+   191→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   192→        <rect x="6" y="3" width="20" height="26" rx="1" fill="white" stroke="#7F9DB9" strokeWidth="1"/>
+   193→        <rect x="6" y="3" width="20" height="4" fill="#0078D4"/>
+   194→        <line x1="9" y1="11" x2="23" y2="11" stroke="#333" strokeWidth="0.5"/>
+   195→        <line x1="9" y1="14" x2="23" y2="14" stroke="#333" strokeWidth="0.5"/>
+   196→        <line x1="9" y1="17" x2="20" y2="17" stroke="#333" strokeWidth="0.5"/>
+   197→        <line x1="9" y1="20" x2="22" y2="20" stroke="#333" strokeWidth="0.5"/>
+   198→        <line x1="9" y1="23" x2="18" y2="23" stroke="#333" strokeWidth="0.5"/>
+   199→      </svg>
+   200→    ),
+   201→    recycle: (
+   202→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   203→        <path d="M8 10L10 27H22L24 10" stroke="#7F9DB9" strokeWidth="1.5" fill="none"/>
+   204→        <rect x="6" y="7" width="20" height="3" rx="1" fill="#7F9DB9"/>
+   205→        <path d="M12 13V23" stroke="#5B9BD5" strokeWidth="1.5"/>
+   206→        <path d="M16 13V23" stroke="#5B9BD5" strokeWidth="1.5"/>
+   207→        <path d="M20 13V23" stroke="#5B9BD5" strokeWidth="1.5"/>
+   208→        <path d="M13 7V5C13 4.44772 13.4477 4 14 4H18C18.5523 4 19 4.44772 19 5V7" stroke="#7F9DB9" strokeWidth="1.5" fill="none"/>
+   209→      </svg>
+   210→    ),
+   211→    photos: (
+   212→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   213→        <rect x="4" y="6" width="24" height="20" rx="2" fill="#5B9BD5" stroke="#3A6EA5" strokeWidth="1"/>
+   214→        <circle cx="12" cy="14" r="3" fill="#FFD044"/>
+   215→        <path d="M4 22L10 16L14 20L20 13L28 22V24C28 25.1046 27.1046 26 26 26H6C4.89543 26 4 25.1046 4 24V22Z" fill="#2E8B57" opacity="0.7"/>
+   216→      </svg>
+   217→    ),
+   218→    outlook: (
+   219→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   220→        <rect x="3" y="6" width="26" height="20" rx="2" fill="white" stroke="#0078D4" strokeWidth="1.5"/>
+   221→        <rect x="3" y="6" width="26" height="5" rx="2" fill="#0078D4"/>
+   222→        <rect x="3" y="6" width="10" height="20" rx="2" fill="#005A9E"/>
+   223→        <rect x="6" y="14" width="4" height="0.5" fill="white" rx="0.25"/>
+   224→        <rect x="6" y="16" width="3" height="0.5" fill="#B4C7DC" rx="0.25"/>
+   225→        <rect x="6" y="18" width="5" height="0.5" fill="white" rx="0.25"/>
+   226→        <rect x="15" y="14" width="11" height="0.5" fill="#333" rx="0.25"/>
+   227→        <rect x="15" y="16" width="9" height="0.5" fill="#666" rx="0.25"/>
+   228→        <rect x="15" y="18" width="10" height="0.5" fill="#333" rx="0.25"/>
+   229→      </svg>
+   230→    ),
+   231→    cmd: (
+   232→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   233→        <rect x="2" y="4" width="28" height="24" rx="2" fill="#1E1E1E" stroke="#666" strokeWidth="1"/>
+   234→        <text x="6" y="18" fill="#CCCCCC" fontSize="11" fontFamily="monospace">C:\&gt;_</text>
+   235→      </svg>
+   236→    ),
+   237→    mspaint: (
+   238→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   239→        <rect x="4" y="4" width="24" height="24" rx="2" fill="white" stroke="#7F9DB9" strokeWidth="1"/>
+   240→        <path d="M7 20L12 10L17 16L22 8L25 14" stroke="#FF4444" strokeWidth="2" fill="none"/>
+   241→        <circle cx="10" cy="22" r="3" fill="#4DA6FF"/>
+   242→        <rect x="18" y="18" width="5" height="5" fill="#FFD044"/>
+   243→      </svg>
+   244→    ),
+   245→    media: (
+   246→      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+   247→        <rect x="4" y="8" width="24" height="16" rx="2" fill="#1E1E1E" stroke="#7F9DB9" strokeWidth="1"/>
+   248→        <polygon points="14,12 14,22 22,17" fill="#FFFFFF"/>
+   249→        <rect x="4" y="8" width="24" height="16" rx="2" fill="none" stroke="#5B9BD5" strokeWidth="1"/>
+   250→      </svg>
+   251→    ),
+   252→  }
+   253→
+   254→  return iconMap[icon] || iconMap['computer']
+   255→}
+   256→
+   257→// Window Content Components
+   258→function WindowContent({ content }: { content: string }) {
+   259→  switch (content) {
+   260→    case 'about': return <AboutContent />
+   261→    case 'experience': return <ExperienceContent />
+   262→    case 'education': return <EducationContent />
+   263→    case 'projects': return <ProjectsContent />
+   264→    case 'skills': return <SkillsContent />
+   265→    case 'contact': return <ContactContent />
+   266→    default: return <div className="xp-placeholder">Content not found</div>
+   267→  }
+   268→}
+   269→
+   270→function AboutContent() {
+   271→  return (
+   272→    <div className="xp-about-content">
+   273→      <div className="xp-about-sidebar">
+   274→        <div className="xp-about-avatar">
+   275→          <div className="xp-about-avatar-placeholder">
+   276→            <svg viewBox="0 0 80 80" width="80" height="80">
+   277→              <circle cx="40" cy="40" r="38" fill="#E8F0FE" stroke="#5B9BD5" strokeWidth="2"/>
+   278→              <circle cx="40" cy="30" r="12" fill="#5B9BD5"/>
+   279→              <ellipse cx="40" cy="58" rx="20" ry="14" fill="#5B9BD5"/>
+   280→            </svg>
+   281→          </div>
+   282→        </div>
+   283→        <h3 style={{ margin: '8px 0 4px', fontSize: '14px', fontWeight: 'bold', color: '#003399' }}>John Doe</h3>
+   284→        <p style={{ margin: 0, fontSize: '11px', color: '#666' }}>Full Stack Developer</p>
+   285→        <div className="xp-about-details">
+   286→          <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Location:</span> <span>San Francisco, CA</span></div>
+   287→          <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Email:</span> <span style={{ color: '#0054E3' }}>john@example.com</span></div>
+   288→          <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Website:</span> <span style={{ color: '#0054E3' }}>johndoe.dev</span></div>
+   289→          <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Available:</span> <span style={{ color: '#008000' }}>Yes</span></div>
+   290→        </div>
+   291→      </div>
+   292→      <div className="xp-about-main">
+   293→        <h2 style={{ margin: '0 0 12px', fontSize: '18px', color: '#003399', borderBottom: '1px solid #B4C7DC', paddingBottom: '6px' }}>About Me</h2>
+   294→        <p style={{ margin: '0 0 12px', fontSize: '12px', lineHeight: '1.6', color: '#333' }}>
+   295→          Hello! I&apos;m a passionate full-stack developer with over 5 years of experience building
+   296→          modern web applications. I specialize in React, Next.js, TypeScript, and Node.js,
+   297→          with a strong foundation in both frontend and backend development.
+   298→        </p>
+   299→        <p style={{ margin: '0 0 12px', fontSize: '12px', lineHeight: '1.6', color: '#333' }}>
+   300→          I love turning complex problems into simple, beautiful, and intuitive solutions.
+   301→          When I&apos;m not coding, you&apos;ll find me exploring new technologies, contributing to
+   302→          open-source projects, or enjoying a good cup of coffee.
+   303→        </p>
+   304→        <h3 style={{ margin: '16px 0 8px', fontSize: '14px', color: '#003399' }}>Quick Facts</h3>
+   305→        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', lineHeight: '1.8', color: '#333' }}>
+   306→          <li>5+ years of professional experience</li>
+   307→          <li>Built 20+ production applications</li>
+   308→          <li>Open-source contributor &amp; maintainer</li>
+   309→          <li>Fluent in English and Spanish</li>
+   310→          <li>Computer Science B.S. from UC Berkeley</li>
+   311→        </ul>
+   312→      </div>
+   313→    </div>
+   314→  )
+   315→}
+   316→
+   317→function ExperienceContent() {
+   318→  const experiences = [
+   319→    {
+   320→      company: 'TechCorp Inc.',
+   321→      role: 'Senior Full Stack Developer',
+   322→      period: 'Jan 2023 - Present',
+   323→      items: [
+   324→        'Led development of a microservices platform serving 2M+ users',
+   325→        'Architected real-time notification system using WebSockets',
+   326→        'Mentored 5 junior developers and conducted code reviews',
+   327→        'Reduced API response times by 40% through optimization',
+   328→      ],
+   329→    },
+   330→    {
+   331→      company: 'StartupXYZ',
+   332→      role: 'Full Stack Developer',
+   333→      period: 'Mar 2021 - Dec 2022',
+   334→      items: [
+   335→        'Built customer-facing dashboard from scratch using React and TypeScript',
+   336→        'Implemented CI/CD pipelines reducing deployment time by 60%',
+   337→        'Developed RESTful APIs with Node.js and PostgreSQL',
+   338→        'Collaborated with design team to implement pixel-perfect UIs',
+   339→      ],
+   340→    },
+   341→    {
+   342→      company: 'WebAgency Co.',
+   343→      role: 'Junior Developer',
+   344→      period: 'Jun 2019 - Feb 2021',
+   345→      items: [
+   346→        'Developed responsive websites for 15+ clients across various industries',
+   347→        'Built WordPress themes and plugins for e-commerce sites',
+   348→        'Participated in agile sprints and daily standups',
+   349→        'Maintained and updated legacy codebases',
+   350→      ],
+   351→    },
+   352→  ]
+   353→
+   354→  return (
+   355→    <div className="xp-experience-content">
+   356→      {experiences.map((exp, i) => (
+   357→        <div key={i} className="xp-experience-item">
+   358→          <div className="xp-exp-header">
+   359→            <div>
+   360→              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#003399' }}>{exp.role}</div>
+   361→              <div style={{ fontSize: '12px', color: '#0054E3' }}>{exp.company}</div>
+   362→            </div>
+   363→            <div style={{ fontSize: '11px', color: '#666', whiteSpace: 'nowrap' }}>{exp.period}</div>
+   364→          </div>
+   365→          <ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>
+   366→            {exp.items.map((item, j) => (
+   367→              <li key={j} style={{ fontSize: '11px', lineHeight: '1.7', color: '#333', marginBottom: '2px' }}>{item}</li>
+   368→            ))}
+   369→          </ul>
+   370→        </div>
+   371→      ))}
+   372→    </div>
+   373→  )
+   374→}
+   375→
+   376→function EducationContent() {
+   377→  return (
+   378→    <div className="xp-education-content">
+   379→      <div className="xp-edu-item">
+   380→        <div className="xp-edu-icon-wrapper">
+   381→          <XPAppIcon icon="photos" size={40} />
+   382→        </div>
+   383→        <div className="xp-edu-details">
+   384→          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#003399' }}>B.S. Computer Science</div>
+   385→          <div style={{ fontSize: '12px', color: '#0054E3' }}>University of California, Berkeley</div>
+   386→          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>2015 - 2019 | GPA: 3.8/4.0</div>
+   387→          <ul style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
+   388→            <li style={{ fontSize: '11px', lineHeight: '1.6', color: '#333' }}>Dean&apos;s List all semesters</li>
+   389→            <li style={{ fontSize: '11px', lineHeight: '1.6', color: '#333' }}>Relevant coursework: Data Structures, Algorithms, Machine Learning, Database Systems, Operating Systems</li>
+   390→            <li style={{ fontSize: '11px', lineHeight: '1.6', color: '#333' }}>Senior thesis: &quot;Optimizing Real-Time Collaborative Editing Systems&quot;</li>
+   391→          </ul>
+   392→        </div>
+   393→      </div>
+   394→      <div className="xp-edu-item" style={{ marginTop: '16px' }}>
+   395→        <div className="xp-edu-icon-wrapper">
+   396→          <XPAppIcon icon="folder" size={40} />
+   397→        </div>
+   398→        <div className="xp-edu-details">
+   399→          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#003399' }}>AWS Solutions Architect Associate</div>
+   400→          <div style={{ fontSize: '12px', color: '#0054E3' }}>Amazon Web Services</div>
+   401→          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Certified - 2022</div>
+   402→          <p style={{ margin: '6px 0 0', fontSize: '11px', lineHeight: '1.6', color: '#333' }}>
+   403→            Demonstrated proficiency in designing distributed systems on AWS, including EC2, S3, Lambda, DynamoDB, and CloudFormation.
+   404→          </p>
+   405→        </div>
+   406→      </div>
+   407→      <div className="xp-edu-item" style={{ marginTop: '16px' }}>
+   408→        <div className="xp-edu-icon-wrapper">
+   409→          <XPAppIcon icon="notepad" size={40} />
+   410→        </div>
+   411→        <div className="xp-edu-details">
+   412→          <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#003399' }}>Meta Front-End Developer Certificate</div>
+   413→          <div style={{ fontSize: '12px', color: '#0054E3' }}>Coursera / Meta</div>
+   414→          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Completed - 2021</div>
+   415→          <p style={{ margin: '6px 0 0', fontSize: '11px', lineHeight: '1.6', color: '#333' }}>
+   416→            9-course program covering React, responsive design, version control, and JavaScript fundamentals.
+   417→          </p>
+   418→        </div>
+   419→      </div>
+   420→    </div>
+   421→  )
+   422→}
+   423→
+   424→function ProjectsContent() {
+   425→  const projects = [
+   426→    {
+   427→      name: 'CloudSync Pro',
+   428→      desc: 'A real-time collaborative workspace platform with live editing, video conferencing, and project management features. Built with Next.js, Socket.io, and WebRTC.',
+   429→      tech: ['Next.js', 'Socket.io', 'PostgreSQL', 'Redis', 'Docker'],
+   430→      link: 'github.com/johndoe/cloudsync',
+   431→    },
+   432→    {
+   433→      name: 'DataViz Studio',
+   434→      desc: 'An interactive data visualization tool that transforms complex datasets into beautiful, shareable charts and dashboards with drag-and-drop functionality.',
+   435→      tech: ['React', 'D3.js', 'Node.js', 'MongoDB'],
+   436→      link: 'github.com/johndoe/dataviz',
+   437→    },
+   438→    {
+   439→      name: 'TaskFlow AI',
+   440→      desc: 'An AI-powered task management app that automatically prioritizes tasks, estimates completion times, and suggests optimal scheduling.',
+   441→      tech: ['TypeScript', 'OpenAI API', 'Express', 'React', 'Prisma'],
+   442→      link: 'github.com/johndoe/taskflow',
+   443→    },
+   444→    {
+   445→      name: 'EcoTrack',
+   446→      desc: 'A carbon footprint tracking mobile app that gamifies sustainable living with challenges, rewards, and community features.',
+   447→      tech: ['React Native', 'Firebase', 'Node.js', 'Chart.js'],
+   448→      link: 'github.com/johndoe/ecotrack',
+   449→    },
+   450→  ]
+   451→
+   452→  return (
+   453→    <div className="xp-projects-content">
+   454→      {projects.map((proj, i) => (
+   455→        <div key={i} className="xp-project-item">
+   456→          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+   457→            <div className="xp-project-icon">
+   458→              <XPAppIcon icon="folder" size={32} />
+   459→            </div>
+   460→            <div style={{ flex: 1 }}>
+   461→              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#003399' }}>{proj.name}</div>
+   462→              <p style={{ margin: '4px 0', fontSize: '11px', lineHeight: '1.5', color: '#333' }}>{proj.desc}</p>
+   463→              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+   464→                {proj.tech.map((t, j) => (
+   465→                  <span key={j} className="xp-tech-badge">{t}</span>
+   466→                ))}
+   467→              </div>
+   468→              <div style={{ marginTop: '6px', fontSize: '10px', color: '#0054E3' }}>{proj.link}</div>
+   469→            </div>
+   470→          </div>
+   471→        </div>
+   472→      ))}
+   473→    </div>
+   474→  )
+   475→}
+   476→
+   477→function SkillsContent() {
+   478→  const categories = [
+   479→    {
+   480→      name: 'Frontend',
+   481→      skills: [
+   482→        { name: 'React / Next.js', level: 95 },
+   483→        { name: 'TypeScript', level: 90 },
+   484→        { name: 'Tailwind CSS', level: 92 },
+   485→        { name: 'HTML / CSS', level: 95 },
+   486→        { name: 'Vue.js', level: 70 },
+   487→      ],
+   488→    },
+   489→    {
+   490→      name: 'Backend',
+   491→      skills: [
+   492→        { name: 'Node.js / Express', level: 88 },
+   493→        { name: 'Python / Django', level: 75 },
+   494→        { name: 'PostgreSQL', level: 85 },
+   495→        { name: 'MongoDB', level: 80 },
+   496→        { name: 'REST / GraphQL', level: 87 },
+   497→      ],
+   498→    },
+   499→    {
+   500→      name: 'DevOps & Tools',
+   501→      skills: [
+   502→        { name: 'Docker / K8s', level: 78 },
+   503→        { name: 'AWS / GCP', level: 82 },
+   504→        { name: 'CI/CD Pipelines', level: 85 },
+   505→        { name: 'Git / GitHub', level: 95 },
+   506→        { name: 'Linux / Bash', level: 80 },
+   507→      ],
+   508→    },
+   509→  ]
+   510→
+   511→  return (
+   512→    <div className="xp-skills-content">
+   513→      {categories.map((cat, i) => (
+   514→        <div key={i} className="xp-skill-category">
+   515→          <h4 style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 'bold', color: '#003399', borderBottom: '1px solid #B4C7DC', paddingBottom: '4px' }}>
+   516→            {cat.name}
+   517→          </h4>
+   518→          {cat.skills.map((skill, j) => (
+   519→            <div key={j} className="xp-skill-row">
+   520→              <div className="xp-skill-name">{skill.name}</div>
+   521→              <div className="xp-skill-bar-bg">
+   522→                <div
+   523→                  className="xp-skill-bar-fill"
+   524→                  style={{ width: `${skill.level}%` }}
+   525→                />
+   526→              </div>
+   527→              <div className="xp-skill-level">{skill.level}%</div>
+   528→            </div>
+   529→          ))}
+   530→        </div>
+   531→      ))}
+   532→    </div>
+   533→  )
+   534→}
+   535→
+   536→function ContactContent() {
+   537→  return (
+   538→    <div className="xp-contact-content">
+   539→      <div className="xp-contact-info">
+   540→        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#003399', marginBottom: '12px' }}>Get in Touch</div>
+   541→        <p style={{ margin: '0 0 16px', fontSize: '12px', lineHeight: '1.6', color: '#333' }}>
+   542→          I&apos;m always open to discussing new projects, creative ideas, or opportunities to be part of your vision.
+   543→          Feel free to reach out through any of the channels below!
+   544→        </p>
+   545→        <div className="xp-contact-row">
+   546→          <span style={{ fontWeight: 'bold', fontSize: '11px', color: '#333', minWidth: '70px' }}>Email:</span>
+   547→          <span style={{ fontSize: '11px', color: '#0054E3' }}>john.doe@example.com</span>
+   548→        </div>
+   549→        <div className="xp-contact-row">
+   550→          <span style={{ fontWeight: 'bold', fontSize: '11px', color: '#333', minWidth: '70px' }}>Phone:</span>
+   551→          <span style={{ fontSize: '11px', color: '#333' }}>+1 (555) 123-4567</span>
+   552→        </div>
+   553→        <div className="xp-contact-row">
+   554→          <span style={{ fontWeight: 'bold', fontSize: '11px', color: '#333', minWidth: '70px' }}>LinkedIn:</span>
+   555→          <span style={{ fontSize: '11px', color: '#0054E3' }}>linkedin.com/in/johndoe</span>
+   556→        </div>
+   557→        <div className="xp-contact-row">
+   558→          <span style={{ fontWeight: 'bold', fontSize: '11px', color: '#333', minWidth: '70px' }}>GitHub:</span>
+   559→          <span style={{ fontSize: '11px', color: '#0054E3' }}>github.com/johndoe</span>
+   560→        </div>
+   561→        <div className="xp-contact-row">
+   562→          <span style={{ fontWeight: 'bold', fontSize: '11px', color: '#333', minWidth: '70px' }}>Twitter:</span>
+   563→          <span style={{ fontSize: '11px', color: '#0054E3' }}>@johndoe_dev</span>
+   564→        </div>
+   565→      </div>
+   566→      <div className="xp-contact-form-area">
+   567→        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#003399', marginBottom: '10px' }}>Send a Message</div>
+   568→        <div className="xp-form-field">
+   569→          <label style={{ fontSize: '11px', color: '#333', display: 'block', marginBottom: '3px' }}>Name:</label>
+   570→          <input className="xp-input" placeholder="Your name" />
+   571→        </div>
+   572→        <div className="xp-form-field">
+   573→          <label style={{ fontSize: '11px', color: '#333', display: 'block', marginBottom: '3px' }}>Email:</label>
+   574→          <input className="xp-input" placeholder="your@email.com" />
+   575→        </div>
+   576→        <div className="xp-form-field">
+   577→          <label style={{ fontSize: '11px', color: '#333', display: 'block', marginBottom: '3px' }}>Message:</label>
+   578→          <textarea className="xp-textarea" rows={4} placeholder="Type your message here..." />
+   579→        </div>
+   580→        <button className="xp-send-btn">Send Message</button>
+   581→      </div>
+   582→    </div>
+   583→  )
+   584→}
+   585→
+   586→// Title bar control icons
+   587→function MinimizeIcon() {
+   588→  return (
+   589→    <svg width="8" height="7" viewBox="0 0 8 7" fill="none">
+   590→      <rect x="0" y="6" width="6" height="1" fill="#1B3B6F"/>
+   591→    </svg>
+   592→  )
+   593→}
+   594→
+   595→function MaximizeIcon() {
+   596→  return (
+   597→    <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+   598→      <rect x="0" y="0" width="8" height="8" rx="1" fill="#1B3B6F" stroke="#082463" strokeWidth="0.5"/>
+   599→      <rect x="1.5" y="1.5" width="5" height="5" fill="#3A8CF2"/>
+   600→    </svg>
+   601→  )
+   602→}
+   603→
+   604→function RestoreDownIcon() {
+   605→  return (
+   606→    <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+   607→      <rect x="2" y="2" width="6" height="6" rx="0.5" fill="#1B3B6F" stroke="#082463" strokeWidth="0.5"/>
+   608→      <rect x="0" y="0" width="6" height="6" rx="1" fill="#3A8CF2" stroke="#082463" strokeWidth="0.5"/>
+   609→      <rect x="1" y="1" width="4" height="4" rx="0.5" fill="#6CB4FF"/>
+   610→    </svg>
+   611→  )
+   612→}
+   613→
+   614→function CloseIcon() {
+   615→  return (
+   616→    <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+   617→      <line x1="0.5" y1="0.5" x2="7.5" y2="7.5" stroke="#FFF" strokeWidth="1.2"/>
+   618→      <line x1="7.5" y1="0.5" x2="0.5" y2="7.5" stroke="#FFF" strokeWidth="1.2"/>
+   619→    </svg>
+   620→  )
+   621→}

@@ -21,6 +21,7 @@ const desktopIcons: DesktopIcon[] = [
   { id: 'projects', label: 'My Documents', icon: 'folder', content: 'projects', windowTitle: 'Projects - My Documents', windowWidth: 600, windowHeight: 500 },
   { id: 'skills', label: 'Notepad', icon: 'notepad', content: 'skills', windowTitle: 'Skills - Notepad', windowWidth: 550, windowHeight: 480 },
   { id: 'contact', label: 'Outlook Express', icon: 'outlook', content: 'contact', windowTitle: 'Contact - Outlook Express', windowWidth: 560, windowHeight: 440 },
+  { id: 'snake', label: 'Snake.exe', icon: 'snake', content: 'game', windowTitle: 'Snake', windowWidth: 520, windowHeight: 460 },
 ]
 
 export default function XPDesktopIcons() {

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useRef, useEffect, useState } from 'react'
+import SnakeGame from './SnakeGame'
 import { useXPStore, WindowState } from '@/store/xp-store'
 
 interface XPWindowProps {
@@ -131,12 +132,14 @@ export default function XPWindow({ window: win }: XPWindowProps) {
       </div>
 
       {/* Menu Bar */}
-      <div className="xp-menubar">
-        <span className="xp-menubar-item">File</span>
-        <span className="xp-menubar-item">Edit</span>
-        <span className="xp-menubar-item">View</span>
-        <span className="xp-menubar-item">Help</span>
-      </div>
+      {win.content !== 'game' && (
+        <div className="xp-menubar">
+          <span className="xp-menubar-item">File</span>
+          <span className="xp-menubar-item">Edit</span>
+          <span className="xp-menubar-item">View</span>
+          <span className="xp-menubar-item">Help</span>
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="xp-window-content">
@@ -145,7 +148,7 @@ export default function XPWindow({ window: win }: XPWindowProps) {
 
       {/* Status Bar */}
       <div className="xp-statusbar">
-        <span className="xp-statusbar-text">Ready</span>
+        <span className="xp-statusbar-text">{win.content === 'game' ? 'Use Arrow Keys or WASD to play' : 'Ready'}</span>
       </div>
 
       {/* Resize Handle */}
@@ -249,6 +252,17 @@ export function XPAppIcon({ icon, size = 32 }: { icon: string; size?: number }) 
         <rect x="4" y="8" width="24" height="16" rx="2" fill="none" stroke="#5B9BD5" strokeWidth="1"/>
       </svg>
     ),
+    snake: (
+      <svg viewBox="0 0 32 32" width={size} height={size} fill="none">
+        <rect x="2" y="2" width="28" height="28" rx="3" fill="#2D5A1E" stroke="#1A3A10" strokeWidth="1.5"/>
+        <rect x="4" y="4" width="8" height="8" rx="1.5" fill="#66FF66"/>
+        <rect x="12" y="4" width="8" height="8" rx="1.5" fill="#4CAF50"/>
+        <rect x="12" y="12" width="8" height="8" rx="1.5" fill="#388E3C"/>
+        <rect x="20" y="12" width="8" height="8" rx="1.5" fill="#2E7D32"/>
+        <circle cx="22" cy="22" r="4" fill="#FF3333"/>
+        <circle cx="21" cy="21" r="1.5" fill="rgba(255,255,255,0.4)"/>
+      </svg>
+    ),
   }
 
   return iconMap[icon] || iconMap['computer']
@@ -263,6 +277,7 @@ function WindowContent({ content }: { content: string }) {
     case 'projects': return <ProjectsContent />
     case 'skills': return <SkillsContent />
     case 'contact': return <ContactContent />
+    case 'game': return <SnakeGame />
     default: return <div className="xp-placeholder">Content not found</div>
   }
 }
