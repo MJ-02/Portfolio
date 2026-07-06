@@ -4,9 +4,6 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Abdullah Majali - Portfolio",
   description: "Abdullah Majali's portfolio",
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({

@@ -403,7 +403,7 @@ function AboutContent() {
         <div className="xp-about-details">
           <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Location:</span> <span>Amman, Jordan</span></div>
           <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Email:</span> <span style={{ color: '#0054E3' }}>majaliabdullah@live.com</span></div>
-          <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Website:</span> <a href="https://github.com/mj-02" target="_blank" rel="noopener noreferrer" className="xp-link">github.com/mj-02</a></div>
+          <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Website:</span> <a href="https://linkedin.com/in/abdullah-majali" target="_blank" rel="noopener noreferrer" className="xp-link">linkedin.com/in/abdullah-majali</a></div>
           <div className="xp-about-detail-row"><span style={{ fontWeight: 'bold', color: '#333' }}>Available:</span> <span style={{ color: '#008000' }}>Yes</span></div>
         </div>
       </div>
@@ -513,7 +513,9 @@ function EducationContent() {
           <div style={{ fontSize: '12px', color: '#0054E3' }}>
             2025 International Conference on New Trends in Computing Sciences (ICTCS) - IEEE
           </div>
-          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>DOI: 10.1109/ICTCS65341.2025.10989457</div>
+          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+            DOI: <a href="https://doi.org/10.1109/ICTCS65341.2025.10989457" target="_blank" rel="noopener noreferrer" className="xp-link">10.1109/ICTCS65341.2025.10989457</a>
+          </div>
           <p style={{ margin: '6px 0 0', fontSize: '11px', lineHeight: '1.6', color: '#333' }}>
             Developed a graph-based machine learning framework to model and detect political bias in
             US news articles using structured knowledge representations and graph learning techniques.
@@ -530,19 +532,19 @@ function ProjectsContent() {
       name: 'BiasLens',
       desc: 'A knowledge graph-based system for media bias detection. Models entities and relationships with a custom ontology, uses a graph ML pipeline over RDF data and graph embeddings to predict political bias in news articles, and applies GLiNER for named entity recognition to populate the graph. Backed by Apache Jena Fuseki as a scalable triplestore. Published at IEEE ICTCS 2025.',
       tech: ['Python', 'Apache Jena', 'GLiNER', 'Docker'],
-      link: 'Sept 2023 - April 2025',
+      period: 'Sept 2023 - April 2025',
     },
     {
       name: 'Document RAG Platform',
       desc: 'Production hybrid Retrieval-Augmented Generation system combining BM25, sparse, and dense vector retrieval via Qdrant, with VLM-powered scanned document understanding and structured ingestion into MongoDB/PostgreSQL.',
       tech: ['Qdrant', 'FastAPI', 'Docker', 'MongoDB', 'PostgreSQL'],
-      link: 'Royal Hashemite Court · July 2025 - Present',
+      period: 'Royal Hashemite Court · July 2025 - Present',
     },
     {
       name: 'AML Risk & Forecasting Suite',
       desc: 'ML models for fraud detection and alert prioritization in financial compliance, plus FastAPI services for time-series demand forecasting and LLM-based trade-anomaly detection.',
       tech: ['PyTorch', 'scikit-learn', 'SHAP', 'FastAPI'],
-      link: 'Eastnets · July 2024 - June 2025',
+      period: 'Eastnets · July 2024 - June 2025',
     },
   ]
 
@@ -562,7 +564,12 @@ function ProjectsContent() {
                   <span key={j} className="xp-tech-badge">{t}</span>
                 ))}
               </div>
-              <div style={{ marginTop: '6px', fontSize: '10px', color: '#0054E3' }}>{proj.link}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                <span style={{ fontSize: '10px', color: '#666' }}>{proj.period}</span>
+                <a href="https://github.com/mj-02" target="_blank" rel="noopener noreferrer" className="xp-link" style={{ fontSize: '10px' }}>
+                  View on GitHub →
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -644,6 +651,18 @@ function SkillsContent() {
 }
 
 function ContactContent() {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [message, setMessage] = useState('')
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault()
+    const subject = `Portfolio message from ${name || 'website visitor'}`
+    const body = `${message}${email ? `\n\n— ${name || 'Anonymous'} (${email})` : `\n\n— ${name || 'Anonymous'}`}`
+    const mailto = `mailto:majaliabdullah@live.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    window.location.href = mailto
+  }
+
   return (
     <div className="xp-contact-content">
       <div className="xp-contact-info">
@@ -673,22 +692,22 @@ function ContactContent() {
           <span style={{ fontSize: '11px', color: '#333' }}>Amman, Jordan</span>
         </div>
       </div>
-      <div className="xp-contact-form-area">
+      <form className="xp-contact-form-area" onSubmit={handleSend}>
         <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#003399', marginBottom: '10px' }}>Send a Message</div>
         <div className="xp-form-field">
           <label style={{ fontSize: '11px', color: '#333', display: 'block', marginBottom: '3px' }}>Name:</label>
-          <input className="xp-input" placeholder="Your name" />
+          <input className="xp-input" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="xp-form-field">
           <label style={{ fontSize: '11px', color: '#333', display: 'block', marginBottom: '3px' }}>Email:</label>
-          <input className="xp-input" placeholder="your@email.com" />
+          <input className="xp-input" type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="xp-form-field">
           <label style={{ fontSize: '11px', color: '#333', display: 'block', marginBottom: '3px' }}>Message:</label>
-          <textarea className="xp-textarea" rows={4} placeholder="Type your message here..." />
+          <textarea className="xp-textarea" rows={4} placeholder="Type your message here..." value={message} onChange={(e) => setMessage(e.target.value)} required />
         </div>
-        <button className="xp-send-btn">Send Message</button>
-      </div>
+        <button type="submit" className="xp-send-btn">Send Message</button>
+      </form>
     </div>
   )
 }
