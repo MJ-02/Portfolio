@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Abdullah Majali - Portfolio (Windows XP Edition)",
-  description: "A nostalgic Windows XP-themed portfolio landing page",
+  title: "Abdullah Majali - Portfolio",
+  description: "Abdullah Majali's portfolio",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/favicon.ico",
   },
 };
 
